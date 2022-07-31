@@ -1,0 +1,21 @@
+{
+    "projectId": "62e14fff092f74e54e15",
+    "projectName": "serah",
+    "functions": [
+        {
+            "$id": "fn_maybank_statement",
+            "name": "fn_maybank_statement",
+            "runtime": "node-16.0",
+            "path": "functions/fn_maybank_statement",
+            "entrypoint": "src/index.js",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "execute": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15
+        }
+    ]
+}
