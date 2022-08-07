@@ -1,3 +1,7 @@
+appwrite teams create --teamId 'serah' --name 'serah'
+
+appwrite projects create --projectId 'serah' --name 'serah' --teamId 'serah'
+
 appwrite storage createBucket --bucketId 'st_maybank' --name 'st_maybank' --permission 'bucket'
 
 appwrite databases create --databaseId 'db_maybank' --name 'db_maybank'

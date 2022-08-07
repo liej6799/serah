@@ -9,14 +9,11 @@ module.exports = async function (req, res) {
   const pdfParser = new PDFParser();
   const database = new sdk.Databases(client, 'db_maybank');
   var beforeText = '';
-  var fileCont = 0;
-  var bufferList = [];
-  let promises = [];
-  var finalObjectList = [];
-  let oneTimeonly = false;
+
   if (
     !req.env['APPWRITE_FUNCTION_ENDPOINT'] ||
-    !req.env['APPWRITE_FUNCTION_API_KEY']
+    !req.env['APPWRITE_FUNCTION_API_KEY'] ||
+    !req.payload
   ) {
     console.warn("Environment variables are not set. Function ct use Appwrite SDK.");
   } else {
@@ -26,137 +23,115 @@ module.exports = async function (req, res) {
       .setKey(req.env['APPWRITE_FUNCTION_API_KEY'])
       .setSelfSigned(true);
   }
-
-  const listFiles = storage.listFiles('st_maybank');
-
-  listFiles.then(function (response) {
-    console.log(typeof (response.files)); // Success
-
-
-    updateProducts(response.files)
-      .then(_ =>
-        pdfParser.parseBuffer(bufferList[fileCont])
-      );
+  storage.getFileDownload("st_maybank", req.payload).then(function (buffer) {
+    pdfParser.parseBuffer(buffer)
+  }, function (error) {
+    res.json({
+      "status": "Error",
+      "message": error
+    }, 500);
   });
-
 
   pdfParser.on("pdfParser_dataReady", pdfData => {
     var object = {};
     var objList = [];
-    fileCont++;
-    console.log(fileCont);
-    console.log(bufferList.length)
-    console.log(finalObjectList.length)
-    if (bufferList.length <= fileCont) {
-      if (!oneTimeonly) {
-        oneTimeonly = true;
 
-        Promise.all(promises).then(() => {
-          res.json({
-            success: true
+    for (var pageIndex in pdfData.Pages) {
+      var page = pdfData.Pages[pageIndex]
+      for (var textIndex in page.Texts) {
+        var text = page.Texts[textIndex];
+        var arr1 = text.R[0].TS;
+        var arr2 = [0, 11, 0, 0];
+
+        if (arr1.length == arr2.length
+          && arr1.every(function (u, i) {
+            return u === arr2[i];
           })
+        ) {
 
-        }).catch((e) => {
-          res.json({
-            "status": "Error",
-            "message": JSON.stringify(e, null, 2)
-          }, 500);
-        });
+          var textData = text.R[0].T;
+          textData = decodeURIComponent(textData);
 
-        for (let i = 0; i < finalObjectList.length; i++) {
-          let createdDocument = database.createDocument('tb_statement', 'unique()', finalObjectList[i]);
-          promises.push(createdDocument);
-        }
-      }
+          if (textData !== "") {
+            if (isDate(textData)) {
 
-      console.log("end")
-    }
-    else {
-      for (var pageIndex in pdfData.Pages) {
-        var page = pdfData.Pages[pageIndex]
-        for (var textIndex in page.Texts) {
-          var text = page.Texts[textIndex];
-          var arr1 = text.R[0].TS;
-          var arr2 = [0, 11, 0, 0];
+              if (isEntryValid(object)) {
+                objList.push(object)
+              }
+              //console.log("Date = " + textData)
+              object = {};
+              object.date = moment(textData, "DD/MM/YY").unix()
 
-          if (arr1.length == arr2.length
-            && arr1.every(function (u, i) {
-              return u === arr2[i];
-            })
-          ) {
+            }
+            else if (isMainTxn(beforeText)) {
+              //console.log("Main Txn = " + textData)
+              object.name = textData;
+            }
+            else if (isAmount(textData)) {
+              //console.log("Amount = " + textData);
+              let symbol = textData.slice(textData.length - 1);
 
-            var textData = text.R[0].T;
-            textData = decodeURIComponent(textData);
+              object.amount = parseFloat(textData.replace('+', '').replace('-', '').replace(',', ''))
 
-            if (textData !== "") {
-              if (isDate(textData)) {
+              if (symbol == '-') {
+                object.amount *= -1;
+              }
 
-                if (isEntryValid(object)) {
-                  objList.push(object)
+            }
+            else if (isBalance(textData)) {
+              //console.log("Balance = " + textData)
+              object.balance = parseFloat(textData.replace(",", ""));
+            }
+            else if (isBeginningBalance(textData)) {
+              //console.log("Beginning Balance = " + textData)
+            }
+            else if (isEndingBalance(textData)) {
+              //console.log("Ending Balance = " + textData)
+            }
+            else if (isTotalCredit(textData)) {
+              //console.log("Total Credit = " + textData)
+            }
+            else if (isTotalDebit(textData)) {
+              //console.log("Total Debit = " + textData)
+            }
+            else {
+              if (!isBlockKeyword(textData)) {
+                //console.log("Recepient = " + textData)
+                textData = textData.trim().replace(/\s\s+/g, ' ');
+                if (!object.description) {
+                  object.description = textData
                 }
-                //console.log("Date = " + textData)
-                object = {};
-                object.date = moment(textData, "DD/MM/YY").unix()
-
-              }
-              else if (isMainTxn(beforeText)) {
-                //console.log("Main Txn = " + textData)
-                object.name = textData;
-              }
-              else if (isAmount(textData)) {
-                //console.log("Amount = " + textData);
-                let symbol = textData.slice(textData.length - 1);
-
-                object.amount = parseFloat(textData.replace('+', '').replace('-', '').replace(',', ''))
-
-                if (symbol == '-') {
-                  object.amount *= -1;
-                }
-
-              }
-              else if (isBalance(textData)) {
-                //console.log("Balance = " + textData)
-                object.balance = parseFloat(textData.replace(",", ""));
-              }
-              else if (isBeginningBalance(textData)) {
-                //console.log("Beginning Balance = " + textData)
-              }
-              else if (isEndingBalance(textData)) {
-                //console.log("Ending Balance = " + textData)
-              }
-              else if (isTotalCredit(textData)) {
-                //console.log("Total Credit = " + textData)
-              }
-              else if (isTotalDebit(textData)) {
-                //console.log("Total Debit = " + textData)
-              }
-              else {
-                if (!isBlockKeyword(textData)) {
-                  //console.log("Recepient = " + textData)
-                  textData = textData.trim().replace(/\s\s+/g, ' ');
-                  if (!object.description) {
-                    object.description = textData
-                  }
-                  else {
-                    object.description += ' ' + textData
-                  }
+                else {
+                  object.description += ' ' + textData
                 }
               }
             }
-
-            beforeText = textData;
           }
+
+          beforeText = textData;
         }
       }
-      for (let i = 0; i < objList.length; i++) {
-        finalObjectList.push(objList[i])
-      }
-
-      pdfParser.parseBuffer(bufferList[fileCont])
     }
+
+    let promises = [];
+    for (let i = 0; i < objList.length; i++) {
+      //console.log(objList[i])
+      let createdDocument = database.createDocument('tb_statement', 'unique()', objList[i]);
+      promises.push(createdDocument);
+    }
+
+    Promise.all(promises).then(() => {
+      res.json({
+        success: true
+      })
+
+    }).catch((e) => {
+      res.json({
+        "status": "Error",
+        "message": JSON.stringify(e, null, 2)
+      }, 500);
+    });
   });
-
-
 
   function isDate(x) {
     const re = /\d{2}\/\d{2}\/\d{2}/gm;
@@ -253,13 +228,6 @@ module.exports = async function (req, res) {
     return false;
   }
 
-  const updateProducts = (products, processed = []) =>
-    (products.length !== 0)
-      ? storage.getFileDownload("st_maybank", products[0].$id)
-        .then(_ => bufferList.push(_))
-        .catch(err => Promise.reject([err, processed]))
-        .then(_ => updateProducts(products.slice(1), processed))
-      : processed//resolve with array of processed product ids
 };
 
 
