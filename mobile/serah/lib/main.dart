@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
-
-import 'pages/statement.dart';
+import 'package:serah/pages/statement/statement_list.dart';
+import 'package:serah/pages/statement/statement_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,13 +27,13 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -43,8 +43,6 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
-  final String title;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -76,7 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text(widget.title),
+          title: Text("Home"),
         ),
         body: Center(
           // Center is a layout widget. It takes a single child and positions it
@@ -131,7 +129,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => StatementPage()),
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            const StatementPage(page: StatementList())),
                   );
                 },
               ),

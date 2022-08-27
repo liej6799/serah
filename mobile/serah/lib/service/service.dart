@@ -8,7 +8,7 @@ class Service {
     Client localClient = Client();
     Storage localStorage = Storage(localClient);
     localClient
-        .setEndpoint('https://192.168.100.33/v1') // Your API Endpoint
+        .setEndpoint('http://192.168.43.56/v1') // Your API Endpoint
         .setProject('62ef2658c28be8ff5d4b') // Your project ID
         .setSelfSigned(status: true);
 
