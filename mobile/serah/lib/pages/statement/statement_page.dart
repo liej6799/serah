@@ -1,14 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:serah/pages/statement/statement_detail.dart';
-import 'package:serah/pages/statement/statement_list.dart';
+import 'dart:io';
 
-import '../../main.dart';
+import 'package:flutter/material.dart';
+import 'package:serah/pages/statement/statement_preview.dart';
 
 class StatementPage extends StatefulWidget {
-  const StatementPage({Key? key, required this.page}) : super(key: key);
+  const StatementPage(
+      {Key? key, required this.page, required this.title, required this.fileId})
+      : super(key: key);
 
   final Widget page;
-
+  final String title;
+  final String fileId;
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
   // how it looks.
@@ -32,22 +34,58 @@ class _StatementPageState extends State<StatementPage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Text('Statement'),
+      appBar: AppBar(
+        leading: BackButton(
+          onPressed: () => Navigator.pop(context),
         ),
-        body: getBody(),
-        floatingActionButton: Visibility(
-            visible: getFloatingActionBarVisibility(), // Set it to false
-            child: getFloatingActionBar()),
-        drawer: getDrawer()
-        // This trailing comma makes auto-formatting nicer for build methods.
-        );
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(widget.title),
+        actions: [
+          Visibility(
+              visible: getDownloadButtonVisibility(),
+              child: IconButton(
+                // onPressed: () {
+                //   StorageService().getFileDownload(widget.fileId).then((bytes) {
+                //     final file = File('statement.pdf');
+                //     file.writeAsBytesSync(bytes);
+                //   }).catchError((error) {
+                //     print(error);
+                //   });
+                // },
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => StatementPage(
+                              fileId: widget.fileId,
+                              title: "Statement Preview",
+                              page: StatementPreview(
+                                fileId: widget.fileId,
+                              ))));
+                },
+                icon: Icon(Icons.picture_as_pdf),
+              ))
+        ],
+      ),
+
+      body: getBody(),
+      floatingActionButton: Visibility(
+          visible: getFloatingActionBarVisibility(), // Set it to false
+          child: getFloatingActionBar()),
+      // This trailing comma makes auto-formatting nicer for build methods.
+    );
   }
 
   Widget getBody() {
     return widget.page;
+  }
+
+  bool getDownloadButtonVisibility() {
+    if (widget.page.toString() == "StatementDetail") {
+      return true;
+    }
+    return false;
   }
 
   bool getFloatingActionBarVisibility() {
@@ -64,58 +102,6 @@ class _StatementPageState extends State<StatementPage> {
         // Add your onPressed code here!
       },
       child: const Icon(Icons.add),
-    );
-  }
-
-  Drawer getDrawer() {
-    return Drawer(
-      // Add a ListView to the drawer. This ensures the user can scroll
-      // through the options in the drawer if there isn't enough vertical
-      // space to fit everything.
-      child: ListView(
-        // Important: Remove any padding from the ListView.
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue,
-            ),
-            child: Text(''),
-          ),
-          ListTile(
-            title: const Text('Home'),
-            onTap: () {
-              // Update the state of the app
-              // ...
-              // Then close the drawer
-              Navigator.pop(context);
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const MyHomePage()));
-            },
-          ),
-          ListTile(
-            title: const Text('Statement'),
-            onTap: () {
-              // Update the state of the app
-              // ...
-              // Then close the drawer
-              Navigator.pop(context);
-              if (widget.page.toString() == "StatementDetail") {
-                Navigator.pop(context);
-              }
-            },
-          ),
-          ListTile(
-            title: const Text('Item 2'),
-            onTap: () {
-              // Update the state of the app
-              // ...
-              // Then close the drawer
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
     );
   }
 }

@@ -2,8 +2,10 @@ import 'package:appwrite/models.dart';
 import 'package:flutter/material.dart';
 import 'package:serah/pages/statement/statement_detail.dart';
 import 'package:serah/pages/statement/statement_page.dart';
-import 'package:serah/pages/statement/statement_preview.dart';
 import 'package:serah/service/storage.dart';
+
+import '../../helper/common.dart';
+import '../../helper/widgets.dart';
 
 class StatementList extends StatefulWidget {
   const StatementList({Key? key}) : super(key: key);
@@ -36,7 +38,7 @@ class _StatementListState extends State<StatementList> {
             return _buildListView(contacts!.files);
 
           default:
-            return CircularProgressIndicator();
+            return Widgets().buildCenterCirular();
         }
       },
     );
@@ -50,13 +52,16 @@ class _StatementListState extends State<StatementList> {
             context,
             MaterialPageRoute(
                 builder: (context) => StatementPage(
-                        page: StatementDetail(
+                    fileId: fileList[index].$id,
+                    title: "Statement Detail",
+                    page: StatementDetail(
                       fileId: fileList[index].$id,
                     ))),
           )
         },
         title: Text(fileList[index].name),
-        subtitle: Text(fileList[index].$createdAt.toString()),
+        subtitle: Text(
+            Common().convertTimeStampToDateTime(fileList[index].$createdAt)),
       ),
       itemCount: fileList.length,
     );

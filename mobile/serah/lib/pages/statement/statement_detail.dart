@@ -1,6 +1,8 @@
 import 'package:appwrite/models.dart';
 import 'package:flutter/material.dart';
 
+import '../../helper/common.dart';
+import '../../helper/widgets.dart';
 import '../../service/storage.dart';
 
 class StatementDetail extends StatefulWidget {
@@ -45,7 +47,7 @@ class _StatementDetailState extends State<StatementDetail> {
             return _buildForm(contacts!);
 
           default:
-            return CircularProgressIndicator();
+            return Widgets().buildCenterCirular();
         }
       },
     );
@@ -91,7 +93,7 @@ class _StatementDetailState extends State<StatementDetail> {
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: TextFormField(
             readOnly: true,
-            initialValue: file.$createdAt.toString(),
+            initialValue: Common().convertTimeStampToDateTime(file.$createdAt),
             decoration: InputDecoration(
               border: UnderlineInputBorder(),
               labelText: 'Created At',

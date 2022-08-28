@@ -26,4 +26,12 @@ class StorageService {
         .getStorage()
         .getFilePreview(bucketId: 'st_maybank', fileId: fileId);
   }
+
+  Future<Uint8List> getFileDownload(String fileId) async {
+    var service = Service();
+
+    return service
+        .getStorage()
+        .getFileDownload(bucketId: 'st_maybank', fileId: fileId);
+  }
 }

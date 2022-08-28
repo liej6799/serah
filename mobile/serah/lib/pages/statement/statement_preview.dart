@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:appwrite/models.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:open_file/open_file.dart';
 
+import '../../helper/widgets.dart';
 import '../../service/storage.dart';
 
 class StatementPreview extends StatefulWidget {
@@ -25,28 +29,35 @@ class StatementPreview extends StatefulWidget {
 
 class _StatementPreviewState extends State<StatementPreview> {
   late Future<Uint8List> _image;
+  late Future<String> _temporaryDirectoryPath;
 
-  Future<Uint8List> _getFilePreview() async {
-    return StorageService().getFilePreview(widget.fileId);
+  Future<Uint8List> _getFileDownload() async {
+    return StorageService().getFileDownload(widget.fileId);
+  }
+
+  Future<String> _getTemporaryDirectory() async {
+    Directory tempDir = await getTemporaryDirectory();
+    return tempDir.path;
   }
 
   @override
   void initState() {
     super.initState();
-    _image = _getFilePreview();
+    _image = _getFileDownload();
+    _temporaryDirectoryPath = _getTemporaryDirectory();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Uint8List>(
-      future: _image,
-      builder: (ctx, snapshot) {
-        if (snapshot.hasData && snapshot.data != null) {
-          return Image.memory(
-            snapshot.data!,
-          );
+    return FutureBuilder(
+      future: Future.wait([_image, _temporaryDirectoryPath]),
+      builder: (ctx, AsyncSnapshot<List<dynamic>> snapshot) {
+        if (snapshot.data?[0] != null && snapshot.data?[1] != null) {
+          final file = File(snapshot.data?[1] + 'statement.pdf');
+          file.writeAsBytesSync(snapshot.data?[0]);
+          return SfPdfViewer.file(file);
         } else {
-          return CircularProgressIndicator();
+          return Widgets().buildCenterCirular();
         }
       },
     );

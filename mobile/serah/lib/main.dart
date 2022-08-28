@@ -130,8 +130,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            const StatementPage(page: StatementList())),
+                        builder: (context) => const StatementPage(
+                            fileId: '',
+                            title: "Statement",
+                            page: StatementList())),
                   );
                 },
               ),
